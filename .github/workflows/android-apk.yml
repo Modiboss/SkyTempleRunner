@@ -5,24 +5,69 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
-
-    container:
-      image: barichello/godot-ci:4.6.3
+    runs-on: ubuntu-24.04
 
     steps:
-      - name: Get project
+      - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Import Godot project
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "cmdline-tools;latest"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.1"
+          sdkmanager "cmake;3.10.2.4988404"
+          sdkmanager "ndk;28.1.13356709"
+
+      - name: Download Godot 4.6.3
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          chmod +x Godot_v4.6.3-stable_linux.x86_64
+          sudo mv Godot_v4.6.3-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Download official Godot export templates
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.6.3.stable"
+          unzip -q Godot_v4.6.3-stable_export_templates.tpz -d /tmp/godot_templates
+          cp /tmp/godot_templates/templates/android_debug.apk \
+            "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+          cp /tmp/godot_templates/templates/android_release.apk \
+            "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+          cp /tmp/godot_templates/templates/android_source.zip \
+            "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+
+      - name: Configure Godot Android paths
+        run: |
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/sdk_path = "$ANDROID_HOME"
+          EOF
+
+      - name: Import project
         run: |
           godot --headless --editor --quit
 
       - name: Build APK
         run: |
           mkdir -p build/android
-          godot --headless --verbose \
-            --export-debug "Android Debug" \
+          godot --headless --export-debug \
+            "Android Debug" \
             build/android/SkyTempleRunner-debug.apk
 
       - name: Upload APK
