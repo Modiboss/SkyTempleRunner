@@ -1,0 +1,33 @@
+name: Build Sky Temple Runner APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    container:
+      image: barichello/godot-ci:4.6.3
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v4
+
+      - name: Import Godot project
+        run: |
+          godot --headless --editor --quit
+
+      - name: Build APK
+        run: |
+          mkdir -p build/android
+          godot --headless --verbose \
+            --export-debug "Android Debug" \
+            build/android/SkyTempleRunner-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkyTempleRunner-Android
+          path: build/android/SkyTempleRunner-debug.apk
+          if-no-files-found: error
