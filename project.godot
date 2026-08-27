@@ -32,3 +32,6 @@ slide={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"physical_keycode":83), Object(InputEventKey,"physical_keycode":4194322)]
 }
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
