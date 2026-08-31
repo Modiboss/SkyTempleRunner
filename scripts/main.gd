@@ -41,8 +41,9 @@ func _make_environment():
     add_child(sun)
 
     var cam := Camera3D.new()
-    cam.position = Vector3(0,4.2,-7.5)
-    cam.current = true
+cam.position = Vector3(0,4.2,-7.5)
+cam.rotation_degrees = Vector3(0,180,0)
+cam.current = true
     add_child(cam)
 
 func _make_runner():
